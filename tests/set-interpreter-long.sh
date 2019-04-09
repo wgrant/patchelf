@@ -28,7 +28,8 @@ echo "running with new interpreter..."
 ln -s "$oldInterpreter" "$newInterpreter"
 ${SCRATCH}/simple
 
-if test "$(uname)" = Linux; then
-    echo "running with explicit interpreter..."
-    "$oldInterpreter" ${SCRATCH}/simple
-fi
+# Skip this test until we solve upstream issue #167
+#if test "$(uname)" = Linux; then
+#    echo "running with explicit interpreter..."
+#    "$oldInterpreter" ${SCRATCH}/simple
+#fi

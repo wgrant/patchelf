@@ -28,7 +28,7 @@ echo "running with new interpreter..."
 ln -s "$oldInterpreter" "$newInterpreter"
 ${SCRATCH}/simple
 
-# Skip this test until we solve upstream issue #167
+# Skip this test until we solve upstream issue NixOS#167
 #if test "$(uname)" = Linux; then
 #    echo "running with explicit interpreter..."
 #    "$oldInterpreter" ${SCRATCH}/simple

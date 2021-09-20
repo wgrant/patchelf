@@ -793,8 +793,8 @@ void ElfFile<ElfFileParamNames>::rewriteSections()
         debug("this is a dynamic library\n");
         rewriteSectionsLibrary();
     } else if (rdi(hdr->e_type) == ET_EXEC) {
-        debug("this is an executable\n");
-        rewriteSectionsExecutable();
+        debug("this is an executable, but using library codepath to avoid shifting start forward\n");
+        rewriteSectionsLibrary();
     } else error("unknown ELF type");
 }
 

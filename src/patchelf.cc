@@ -591,6 +591,17 @@ void ElfFile<ElfFileParamNames>::rewriteSectionsLibrary()
         if (thisPage > startPage) startPage = thisPage;
     }
 
+    // Find file's base virtual address.
+    // XXX wgrant: Assumes that there's a PT_LOAD from the start of the file,
+    // and that the PHT falls within it.
+    Elf_Phdr *base_pt_load = NULL;
+    for (auto &phdr : phdrs)
+        if (rdi(phdr.p_type) == PT_LOAD && rdi(phdr.p_offset) == 0)
+	    base_pt_load = &phdr;
+    assert(base_pt_load != NULL);
+    Elf_Addr base_vaddr = rdi(base_pt_load->p_vaddr);
+
+    debug("base virtual address is 0x%llx\n", (unsigned long long) base_vaddr);
     debug("last page is 0x%llx\n", (unsigned long long) startPage);
 
     /* Because we're adding a new section header, we're necessarily increasing
@@ -598,9 +609,14 @@ void ElfFile<ElfFileParamNames>::rewriteSectionsLibrary()
        to overlap the program header table in memory; we need to shift the first
        few segments to someplace else. */
     /* Some sections may already be replaced so account for that */
+    // XXX wgrant: We're adding a new *program* header, not section header.
+    // XXX wgrant: Is this 1 because we assume that 0 is the PT_PHDR? That
+    // seems bold.
+    // XXX wgrant: This is some awesome conflation of offsets and vaddrs.
+    // XXX wgrant: This seems to assume that sections are ordered by address?
     unsigned int i = 1;
     Elf_Addr pht_size = sizeof(Elf_Ehdr) + (phdrs.size() + 1)*sizeof(Elf_Phdr);
-    while( shdrs[i].sh_addr <= pht_size && i < rdi(hdr->e_shnum) ) {
+    while( shdrs[i].sh_addr <= base_vaddr + pht_size && i < rdi(hdr->e_shnum) ) {
         if (not haveReplacedSection(getSectionName(shdrs[i])))
             replaceSection(getSectionName(shdrs[i]), shdrs[i].sh_size);
         i++;
@@ -653,7 +669,7 @@ void ElfFile<ElfFileParamNames>::rewriteSectionsLibrary()
     assert(curOff == startOffset + neededSpace);
 
     /* Write out the updated program and section headers */
-    rewriteHeaders(hdr->e_phoff);
+    rewriteHeaders(base_vaddr + rdi(hdr->e_phoff));
 }
 
 
